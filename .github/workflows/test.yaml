@@ -1,0 +1,26 @@
+name: Translator Tests
+
+on:
+  push: 
+    branches: [master]
+
+jobs:
+  test-ubuntu:
+    runs-on: ubuntu-latest
+    name: Build and Test on Ubuntu
+    steps:
+      - uses: actions/checkout@v3
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: master
+      - run: zig build test
+  test-mac:
+    runs-on: macos-latest
+    name: Build and Test on MacOS
+    steps:
+      - uses: actions/checkout@v3
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: master
+      - run: zig build test
+
