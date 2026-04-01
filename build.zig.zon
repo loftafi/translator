@@ -1,0 +1,19 @@
+.{
+    .name = .translator,
+    .version = "0.1.0",
+    .fingerprint = 0x58cde3ebc6d9f171, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .praxis = .{
+            .url = "git+https://github.com/loftafi/praxis.git#136a57c1fbea3c42761caeec50fa46cdce123228",
+            .hash = "praxis-0.6.8-FPf2NfD3BgDUXwI1JUhJk0Cljgv9QL5wtowuf41Sr5Hg",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "LICENSE.md",
+        "README.md",
+    },
+}
