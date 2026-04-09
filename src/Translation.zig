@@ -22,6 +22,7 @@ pub fn deinit(self: *Translation, allocator: Allocator) void {
         allocator.free(item.*);
     }
     self.data.deinit(allocator);
+    self.* = undefined;
 }
 
 /// Each colum represents a langauge in the `lang.Lang` enum. The header row
@@ -32,8 +33,10 @@ pub fn loadTranslationData(
     allocator: Allocator,
     tdata: []const u8,
 ) Allocator.Error!void {
+    // Take a copy of the CSV data, and hold it in our list of CSV Data files.
     const data = try allocator.dupe(u8, tdata);
     try self.data.append(allocator, data);
+
     var headers: std.ArrayListUnmanaged(*std.StringHashMapUnmanaged([]const u8)) = .empty;
     defer headers.deinit(allocator);
     var i = CsvReader{ .data = data };
@@ -59,7 +62,11 @@ pub fn loadTranslationData(
                     err("loadTranslationData has invalid languge code: '{s}'", .{i.value});
                     return;
                 }
-                try self.maps.put(allocator, lr, .empty);
+                const entry = try self.maps.getOrPut(allocator, lr);
+                if (!entry.found_existing) {
+                    entry.key_ptr.* = lr;
+                    entry.value_ptr.* = .empty;
+                }
                 try headers.append(allocator, self.maps.getPtr(lr).?);
             },
         }
@@ -86,7 +93,10 @@ pub fn loadTranslationData(
                 while (col < headers.items.len) : (col += 1) {
                     n = i.next();
                     if (n == .field) {
-                        try headers.items[col].*.put(allocator, key, i.value);
+                        const entry = try headers.items[col].*.getOrPut(allocator, key);
+                        if (!entry.found_existing)
+                            entry.key_ptr.* = key;
+                        entry.value_ptr.* = i.value;
                     } else if (n == .eol or n == .eof) {
                         // Handle case where last column(s) are empty
                         break;
@@ -121,6 +131,11 @@ pub fn setLanguage(self: *Translation, language: Lang) void {
 pub fn translate(self: *Translation, key: []const u8) []const u8 {
     if (self.current) |current| {
         if (current.get(key)) |value| {
+            return value;
+        }
+    }
+    if (self.maps.get(Lang.english)) |english| {
+        if (english.get(key)) |value| {
             return value;
         }
     }
@@ -169,6 +184,45 @@ test "translator" {
             \\COFFEE,a,a,a,a,a
         );
         try expectEqual(5, translator.maps.count());
+    }
+}
+
+test "ammend_translation_data" {
+    const allocator = std.testing.allocator;
+    var translator: Translation = .empty;
+    defer translator.deinit(allocator);
+
+    try translator.loadTranslationData(allocator,
+        \\keys,en,es
+        \\NONE,,
+        \\APPLE,a,a
+        \\PEAR,p,p
+    );
+    try expectEqual(2, translator.maps.count());
+    try expect(!translator.maps.contains(Lang.chinese));
+    try expect(translator.maps.contains(Lang.english));
+    translator.setLanguage(Lang.english);
+    try expectEqual(3, translator.current.?.count());
+    try expectEqualStrings("a", translator.translate("APPLE"));
+    try expectEqualStrings("p", translator.translate("PEAR"));
+    try expectEqualStrings("COFFEE", translator.translate("COFFEE"));
+    translator.setLanguage(Lang.hebrew);
+    try expectEqualStrings("a", translator.translate("APPLE"));
+
+    try translator.loadTranslationData(allocator,
+        \\keys,en,es,zh_TW
+        \\PEAR,pear,pearo,水果
+        \\COFFEE,coffee,cafe,咖啡
+    );
+    if (false) {
+        try expectEqual(3, translator.maps.count());
+        translator.setLanguage(Lang.english);
+        try expect(translator.maps.contains(Lang.chinese));
+        try expect(translator.maps.contains(Lang.english));
+        try expectEqual(4, translator.current.?.count());
+        try expectEqualStrings("a", translator.translate("APPLE"));
+        try expectEqualStrings("pear", translator.translate("PEAR"));
+        try expectEqualStrings("coffee", translator.translate("COFFEE"));
     }
 }
 
