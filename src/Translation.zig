@@ -57,7 +57,7 @@ pub fn loadTranslationData(
             .field => {
                 col += 1;
                 if (col == 1) continue; // Skip unused first cell
-                const lr: Lang = Lang.parse_code(i.value);
+                const lr: Lang = Lang.parseCode(i.value);
                 if (lr == .unknown) {
                     err("loadTranslationData has invalid languge code: '{s}'", .{i.value});
                     return;
