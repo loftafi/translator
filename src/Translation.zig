@@ -25,6 +25,16 @@ pub fn deinit(self: *Translation, allocator: Allocator) void {
     self.* = undefined;
 }
 
+/// Report the languages this `Translation` struct supports
+pub fn format(self: *const Translation, writer: *std.Io.Writer) !void {
+    var iter = self.maps.keyIterator();
+    var first = true;
+    while (iter.next()) |lang| {
+        if (!first) try writer.print(" ", .{}) else first = false;
+        try writer.print("{t}", .{lang.*});
+    }
+}
+
 /// Each colum represents a langauge in the `lang.Lang` enum. The header row
 /// contans the language code (defined by the enum), and every subsequent row
 /// should have the same number of columns as the header row.
@@ -224,6 +234,19 @@ test "ammend_translation_data" {
         try expectEqualStrings("pear", translator.translate("PEAR"));
         try expectEqualStrings("coffee", translator.translate("COFFEE"));
     }
+}
+
+test "translator_format" {
+    const allocator = std.testing.allocator;
+
+    var translator: Translation = .empty;
+    defer translator.deinit(allocator);
+    try translator.loadTranslationData(allocator, "keys,en,el\nBREAD,\"bread\nloaf\",ἄρτος\n");
+    try expect(translator.maps.contains(Lang.english));
+    try expect(translator.maps.contains(Lang.greek));
+    const f = try std.fmt.allocPrint(allocator, "{f}", .{translator});
+    defer allocator.free(f);
+    try expectEqualStrings("greek english", f);
 }
 
 test "translator_with_cr" {
