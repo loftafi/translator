@@ -1,12 +1,12 @@
 .{
     .name = .translator,
-    .version = "0.2.5",
+    .version = "0.3.0",
     .fingerprint = 0x58cde3ebc6d9f171, // Changing this has security and trust implications.
     .minimum_zig_version = "0.17.0",
     .dependencies = .{
         .praxis = .{
-            .url = "git+https://github.com/loftafi/praxis?ref=0.17.0#d54efb3e3797ce499b70eb0cc46d40e5f3da3992",
-            .hash = "praxis-0.17.0-FPf2NXMHCADmKn3ScVvxPhQ5qOvJnwipZXowX_w_MI_c",
+            .url = "git+https://github.com/loftafi/praxis?ref=0.18.0#157372a46a2f9445424c3f4dd1df9dc7e5947d83",
+            .hash = "praxis-0.18.0-FPf2Na0kCABpxt0r44OqQirHnLnxMxNwkQxamj2P9mqt",
         },
     },
     .paths = .{
